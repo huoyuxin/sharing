@@ -1,73 +1,87 @@
-https://linuxhint.com/use-docker-cli-mac-without-docker-desktop/
+# docker cli without desktop
 https://dev.to/elliotalexander/how-to-use-docker-without-docker-desktop-on-macos-217m
-https://how.wtf/how-to-use-docker-without-docker-desktop-on-macos.html
+https://velog.io/@dmdwns2/MacM1-limactl-is-running-under-rosetta-please-reinstall-lima-with-native-arch
+colima start
+# docker login https://hub.docker.com
 
-安装 Homebrew:
+# build an image in local
+docker build -t thisisshui/egg_app:0123 -f docker/Dockerfile .;
+# docker build --build-arg COMMIT_ID=$(git ls-remote https://github.com/huoyuxin/sharing.git refs/heads/master) -t thisisshui/egg_app:0123 -f docker/Dockerfile .;
+# before push, create repository in https://hub.docker.com/repositories/thisisshui
+docker push thisisshui/egg_app:0123;
 
-如果你还没有安装 Homebrew，可以在终端中执行以下命令安装：
+curl 127.0.0.1:7001/health
+# 会覆盖 CMD
 
-bash
-Copy code
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-使用 Homebrew 安装 Docker CLI:
+# todo: -it vs --entrypoint bash
+# todo: -it vs --entrypoint bash
+# todo: -it vs --entrypoint bash
+# todo: -it vs --entrypoint bash
+# todo: -it vs --entrypoint bash
 
-bash
-Copy code
-brew install docker
-这将安装 Docker 引擎和 Docker CLI。
-
-启动 Docker 引擎:
-
-安装完成后，你可以通过以下命令启动 Docker 引擎：
-
-bash
-Copy code
-sudo dockerd
-请注意，这需要管理员权限（sudo），因为 Docker 引擎通常需要访问系统资源。
-
-测试 Docker CLI:
-
-在另一个终端窗口中，尝试运行 Docker CLI 命令，例如：
-
-bash
-Copy code
-docker version
-这应该显示 Docker 版本信息，表示 Docker CLI 成功安装并与 Docker 引擎通信。
-
-
-
-
-
-brew install docker;
-sudo docker info;
-
-docker build -t egg_app:0123 -f docker/Dockerfile .;
-docker push mingyuanxiaoshui/egg_app:0123;
-
-# todo: curl 7001 端口
-# todo: curl 7001 端口
-# todo: curl 7001 端口
+docker run -it thisisshui/egg_app:0123;
+docker run --entrypoint bash thisisshui/egg_app:0123;
 
 # 会覆盖 CMD
-docker run -it -p 7001:7001 --entrypoint /bin/bash egg_app:0123;
-docker run -it -p 7001:7001 egg_app:0123;
+docker run -it -p 7001:7001 --entrypoint bash thisisshui/egg_app:0123;
+docker run -p 7001:7001 thisisshui/egg_app:0123;
 # 如何进入 bash
 docker ps;
-docker exec -it e50f81d7f662 /bin/bash;
+docker exec -it e50f81d7f662 bash;
 # 不需要每次改 id
-docker run --name egg_app -it -p 7001:7001 egg_app:0123;
-docker exec -it egg_app /bin/bash;
+docker run --name thisisshui/egg_app -it -p 7001:7001 thisisshui/egg_app:0123;
+docker exec -it thisisshui/egg_app bash;
 # name 占用，clean
 docker image prune -f; docker container prune -f
-# doing: env
-# doing: env
-# doing: env
-# doing: env
-# doing: env
+
+# env
 echo $NODE_ENV
-docker run -it -p 7001:7001 --entrypoint /bin/bash --env NODE_ENV=test egg_app:0123;
+docker run -it -p 7001:7001 --entrypoint bash thisisshui/egg_app:0123;
+docker run -it -p 7001:7001 --entrypoint bash --env NODE_ENV=test thisisshui/egg_app:0123;
+
 # volume
+ls ignore-dir;
+docker run -it --entrypoint bash thisisshui/egg_app:0123;
+docker run -it --entrypoint bash -v ~/sharing/egg-app-for-docker:/app/egg-app-for-docker thisisshui/egg_app:0123;
 
-docker run --name egg_app -it -p 7001:7001 -v /Users/yuxinhuo/project/shopee/seller/sharing/egg-app-for-docker:/app/egg-app-for-docker egg_app:0123;
+# network 多个容器间的交互
+docker network create shui_network
+docker run --name egg_app_1 thisisshui/egg_app:0123;
+docker rm egg_app_1;
+# correct
+# docker run --name egg_app_1 --network shui_network thisisshui/egg_app:0123;
+docker run --name egg_app_2 --network shui_network thisisshui/egg_app:0123;
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' egg_app_1
+docker exec -it egg_app_1 bash
+curl 172.18.0.2:7001;
 
-# link
+# platform
+docker run --platform linux/amd64 thisisshui/egg_app:0123
+
+
+
+# k8s
+# https://minikube.sigs.k8s.io/docs/start/
+# https://pet2cattle.com/2022/09/minikube-colima-macos-m1
+
+docker build -t thisisshui/egg_app:0124_copy -f docker/Dockerfile .;
+
+minikube config set driver docker
+minikube start;
+kubectl delete pod egg-app-pod; 
+kubectl apply -f k8s/example.yaml;
+kubectl describe pod egg-app-pod
+
+kubectl exec -it egg-app-pod -c egg-app-container -- /bin/sh
+curl http://localhost:7001/health
+curl http://localhost:7001/boom
+
+# todo: visit from machine
+kubectl logs egg-app-pod
+kubectl get service egg-app-service
+kubectl get nodes -o wide
+curl 192.168.49.2:32530/health
+
+
+kubectl get pods
+kubectl exec -it egg-app-pod -- /bin/sh

@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: egg-app-service
+spec:
+  selector:
+    app: egg-app-pod
+  ports:
+    - protocol: TCP
+      port: 7001
+      targetPort: 7001
+  type: NodePort
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: egg-app-pod
+spec:
+  containers:
+    - name: egg-app-container
+      image: thisisshui/egg_app:0124_copy
+      imagePullPolicy: IfNotPresent
+      command: ['/usr/local/bin/npm', 'run', 'dev']
+      ports:
+        - containerPort: 7001
+      resources:
+        limits:
+          cpu: '1.5' # 限制容器使用的 CPU 上限为 1.5 核
+          memory: '512Mi' # 限制容器使用的内存上限为 512 MiB
+        requests:
+          cpu: '0.75' # 设置容器的 CPU 请求为 0.75 核
+          memory: '256Mi' # 设置容器的内存请求为 256 MiB
+      livenessProbe:
+        httpGet:
+          path: /health # 健康检查路径
+          port: 7001 # 容器端口
+        initialDelaySeconds: 3 # 启动后等待 3 秒再开始检查
+        periodSeconds: 5 # 每隔 5 秒进行一次检查
+      # readinessProbe:
+      #   httpGet:
+      #     path: /readiness # 就绪检查路径
+      #     port: 7001 # 容器端口
+      #   initialDelaySeconds: 5 # 启动后等待 5 秒再开始检查
+      #   periodSeconds: 10 # 每隔 10 秒进行一次检查
